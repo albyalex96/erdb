@@ -90,7 +90,7 @@ const resolveAnimeToTmdb = async (
   const subtype = (data?.requested?.subtype || data?.subtype || data?.kitsu?.subtype || '').toLowerCase();
   const type: 'movie' | 'tv' = (subtype === 'movie' || subtype === 'special') ? 'movie' : 'tv';
 
-  return { id: Number(tmdbId), type, season: Number.isFinite(season) ? (season as number) : null };
+  return { id: Number(tmdbId), type, season: Number.isFinite(season) ? (season as number) : null, isAnime: true };
 };
 
 const resolveTmdbFromErdbId = async (
@@ -98,7 +98,7 @@ const resolveTmdbFromErdbId = async (
   metaType: unknown,
   tmdbKey: string,
   lang: string | null,
-): Promise<{ id: number; type: 'movie' | 'tv'; season?: number | null } | null> => {
+): Promise<{ id: number; type: 'movie' | 'tv'; season?: number | null; isAnime?: boolean } | null> => {
   if (!erdbId) return null;
   const stremioType = normalizeStremioType(metaType);
 
@@ -247,6 +247,17 @@ const translateMetaPayload = async (
   if (!details || typeof details !== 'object') return meta;
 
   let translatedOverview = typeof details.overview === 'string' ? details.overview : null;
+
+  // For non-anime content, also translate titles
+  let translatedTitle: string | null = null;
+  if (!tmdbRef.isAnime) {
+    translatedTitle =
+      typeof details.title === 'string'
+        ? details.title
+        : typeof details.name === 'string'
+          ? details.name
+          : null;
+  }
 
   // Use season-specific metadata if available for anime seasons
   if (tmdbRef.type === 'tv' && typeof tmdbRef.season === 'number' && tmdbRef.season > 0) {
