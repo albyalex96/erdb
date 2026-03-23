@@ -570,10 +570,16 @@ export function HomePageView({ refs, state, derived, actions }: HomePageViewProp
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 block">
                     {providersLabel} — drag the grip to reorder (left → right / top → bottom)
                   </span>
+                  {previewType === 'poster' ? (
+                    <span className="block text-[10px] text-slate-500/80">
+                      Order flows top -&gt; bottom, then continues in the right column.
+                    </span>
+                  ) : null}
                   <RatingProviderSortableList
                     rows={ratingProviderRows}
                     onReorder={reorderRatingPreference}
                     onToggle={toggleRatingPreference}
+                    fillDirection={previewType === 'poster' ? 'column' : 'row'}
                   />
                 </div>
               </div>

@@ -29,6 +29,7 @@ export type RatingProviderSortableListProps = {
   rows: RatingProviderRow[];
   onReorder: (fromIndex: number, toIndex: number) => void;
   onToggle: (id: RatingPreference) => void;
+  fillDirection?: 'row' | 'column';
 };
 
 const dropAnimation = {
@@ -43,9 +44,11 @@ const dropAnimation = {
 
 function SortableRow({
   row,
+  position,
   onToggle,
 }: {
   row: RatingProviderRow;
+  position: number;
   onToggle: (id: RatingPreference) => void;
 }) {
   const {
@@ -101,6 +104,16 @@ function SortableRow({
         />
         <span className="truncate">{meta?.label ?? row.id}</span>
       </label>
+      <span
+        className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+          row.enabled
+            ? 'border-orange-500/35 bg-orange-500/10 text-orange-100'
+            : 'border-white/10 bg-white/[0.03] text-slate-500'
+        }`}
+        aria-label={`Position ${position}`}
+      >
+        {position}
+      </span>
     </li>
   );
 }
@@ -121,10 +134,23 @@ function DragPreview({ row }: { row: RatingProviderRow }) {
   );
 }
 
-export function RatingProviderSortableList({ rows, onReorder, onToggle }: RatingProviderSortableListProps) {
+export function RatingProviderSortableList({
+  rows,
+  onReorder,
+  onToggle,
+  fillDirection = 'row',
+}: RatingProviderSortableListProps) {
   const [activeId, setActiveId] = useState<RatingPreference | null>(null);
   const [overlayRoot, setOverlayRoot] = useState<HTMLElement | null>(null);
   const itemIds = useMemo(() => rows.map((r) => r.id), [rows]);
+  const rowCount = Math.max(1, Math.ceil(rows.length / 2));
+  const listStyle =
+    fillDirection === 'column'
+      ? {
+          gridAutoFlow: 'column' as const,
+          gridTemplateRows: `repeat(${rowCount}, auto)`,
+        }
+      : undefined;
 
   useLayoutEffect(() => {
     setOverlayRoot(document.body);
@@ -168,9 +194,12 @@ export function RatingProviderSortableList({ rows, onReorder, onToggle }: Rating
       onDragCancel={handleDragCancel}
     >
       <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-        <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[min(22rem,55vh)] overflow-y-auto pr-0.5 [touch-action:pan-y]">
-          {rows.map((row) => (
-            <SortableRow key={row.id} row={row} onToggle={onToggle} />
+        <ul
+          className="grid grid-cols-2 gap-x-3 gap-y-1.5 max-h-[min(22rem,55vh)] overflow-y-auto pr-0.5 [touch-action:pan-y]"
+          style={listStyle}
+        >
+          {rows.map((row, index) => (
+            <SortableRow key={row.id} row={row} position={index + 1} onToggle={onToggle} />
           ))}
         </ul>
       </SortableContext>
